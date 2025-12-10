@@ -6,6 +6,7 @@ import * as assert from 'assert';
 import {
 	LineBreakBefore,
 	MaterializedChatMessage,
+	MaterializedChatMessageBreakpoint,
 	MaterializedChatMessageTextChunk,
 	GenericMaterializedContainer,
 } from '../materialized';
@@ -85,5 +86,38 @@ suite('Materialized', () => {
 		assert.deepStrictEqual(await container.upperBoundTokenCount(tokenizer), 13);
 		container.removeLowestPriorityChild();
 		assert.deepStrictEqual(await container.upperBoundTokenCount(tokenizer), 8);
+	});
+
+	test('removes cache breakpoint–only nodes when pruning triggers', () => {
+		const root = new GenericMaterializedContainer(
+			undefined,
+			1,
+			undefined,
+			1,
+			parent => [
+				new MaterializedChatMessage(
+					parent,
+					0,
+					Raw.ChatRole.User,
+					'user',
+					undefined,
+					undefined,
+					1,
+					[],
+					parent => [
+						new MaterializedChatMessageBreakpoint(parent, {
+							type: Raw.ChatCompletionContentPartKind.CacheBreakpoint,
+							cacheType: 'ephemeral',
+						}),
+					]
+				),
+			],
+			[],
+			0
+		);
+
+		const removed = root.removeLowestPriorityChild();
+		assert.strictEqual(removed.length, 1);
+		assert.ok(root.children.length === 0);
 	});
 });

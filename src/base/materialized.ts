@@ -680,6 +680,13 @@ function removeLowestPriorityChild(node: ContainerType, removed: MaterializedNod
 	}
 
 	if (!lowest) {
+		if (
+			node.children.length > 0 &&
+			node.children.every(child => child instanceof MaterializedChatMessageBreakpoint)
+		) {
+			removeNode(node, removed);
+			return;
+		}
 		throw new BudgetExceededError(node);
 	}
 
